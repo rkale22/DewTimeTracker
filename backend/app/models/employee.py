@@ -24,7 +24,14 @@ class Employee(SQLModel, table=True):
     
     # Relationships
     client: Optional["Client"] = Relationship(back_populates="employees")
-    # timesheets: List["Timesheet"] = Relationship(back_populates="employee")  # Will add this in Step 1.2.3
+    timesheets_created: List["Timesheet"] = Relationship(
+        back_populates="employee",
+        sa_relationship_kwargs={"foreign_keys": "[Timesheet.employee_id]"}
+    )
+    timesheets_approved: List["Timesheet"] = Relationship(
+        back_populates="approver",
+        sa_relationship_kwargs={"foreign_keys": "[Timesheet.approved_by]"}
+    )
     
     class Config:
         schema_extra = {

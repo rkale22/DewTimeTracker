@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, create_engine, Session
 from app.config import settings
 
 # Import all models to register them with SQLModel
-from app.models import Client, Employee
+from app.models import Client, Employee, Timesheet
 
 # Create database engine
 engine = create_engine(
