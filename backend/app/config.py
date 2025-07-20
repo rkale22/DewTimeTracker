@@ -21,11 +21,19 @@ class Settings(BaseSettings):
     
     # Application
     debug: bool = True
-    allowed_hosts: List[str] = ["localhost", "127.0.0.1"]
-    cors_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    allowed_hosts: str = "localhost,127.0.0.1"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     
     # Token
     approval_token_expire_days: int = 10
+    
+    @property
+    def allowed_hosts_list(self) -> List[str]:
+        return [host.strip() for host in self.allowed_hosts.split(',')]
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.cors_origins.split(',')]
     
     class Config:
         env_file = ".env"
