@@ -32,6 +32,7 @@ class Employee(SQLModel, table=True):
         back_populates="approver",
         sa_relationship_kwargs={"foreign_keys": "[Timesheet.approved_by]"}
     )
+    audit_logs: List["AuditLog"] = Relationship(back_populates="actor")
     
     class Config:
         schema_extra = {

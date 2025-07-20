@@ -2,5 +2,6 @@
 from .client import Client
 from .employee import Employee, EmployeeRole
 from .timesheet import Timesheet, TimesheetStatus
+from .audit_log import AuditLog, AuditEventType
 
-__all__ = ["Client", "Employee", "EmployeeRole", "Timesheet", "TimesheetStatus"] 
+__all__ = ["Client", "Employee", "EmployeeRole", "Timesheet", "TimesheetStatus", "AuditLog", "AuditEventType"] 

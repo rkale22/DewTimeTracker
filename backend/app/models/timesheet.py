@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime, date
 from enum import Enum
 import json
@@ -37,6 +37,7 @@ class Timesheet(SQLModel, table=True):
         back_populates="timesheets_approved",
         sa_relationship_kwargs={"foreign_keys": "[Timesheet.approved_by]"}
     )
+    audit_logs: List["AuditLog"] = Relationship(back_populates="timesheet")
     
     @property
     def hours_data(self) -> Dict[str, Any]:
