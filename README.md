@@ -113,22 +113,3 @@ API documentation at `http://localhost:8000/docs`
 
 The frontend will be available at `http://localhost:3000`
 
-## Development Workflow
-
-This project follows a step-by-step development approach:
-
-1. **Step 1.1**: Project Structure Setup ✅
-2. **Step 1.2**: Database Schema Design (Next)
-3. **Step 1.3**: Basic FastAPI Backend Setup
-4. **Step 1.4**: Basic React Frontend Setup
-
-## Contributing
-
-1. Follow the step-by-step development approach
-2. Write meaningful commit messages
-3. Test each feature before moving to the next step
-4. Follow best practices for code organization
-
-## License
-
-This project is proprietary to DEW Software.
