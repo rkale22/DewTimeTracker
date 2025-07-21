@@ -5,6 +5,7 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
+from fastapi.security import HTTPAuthorizationCredentials
 
 from app.models.employee import Employee
 from app.config import settings
@@ -85,8 +86,8 @@ def get_current_user(db, token: str) -> Employee:
 
 
 def get_current_user_dependency(
-    token: str = Depends(HTTPBearer()),
+    token: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
     db: Session = Depends(get_db)
 ) -> Employee:
     """Dependency to get current user from JWT token"""
-    return get_current_user(db, token) 
+    return get_current_user(db, token.credentials) 

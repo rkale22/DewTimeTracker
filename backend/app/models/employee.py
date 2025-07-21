@@ -2,6 +2,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
+from app.models.time_off import TimeOff
 
 
 class EmployeeRole(str, Enum):
@@ -35,6 +36,10 @@ class Employee(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[Timesheet.approved_by]"}
     )
     audit_logs: List["AuditLog"] = Relationship(back_populates="actor")
+    time_off_requests: List["TimeOff"] = Relationship(
+        back_populates="employee",
+        sa_relationship_kwargs={"foreign_keys": "[TimeOff.employee_id]"}
+    )
     
     class Config:
         schema_extra = {

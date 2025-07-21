@@ -127,4 +127,6 @@ def get_user_with_client_access(
 # Convenience functions for common role requirements
 require_consultant = require_role(EmployeeRole.CONSULTANT)
 require_client_manager = require_role(EmployeeRole.CLIENT_MANAGER)
-require_dew_admin_role = require_role(EmployeeRole.DEW_ADMIN) 
+require_dew_admin_role = require_role(EmployeeRole.DEW_ADMIN)
+
+get_current_user = get_current_user_dependency 
