@@ -12,7 +12,7 @@ This application allows:
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Ant Design
+- **Frontend**: React 18 + TypeScript + Material UI (MUI)
 - **Backend**: FastAPI + Python 3.8+
 - **Database**: PostgreSQL
 - **Authentication**: JWT tokens
