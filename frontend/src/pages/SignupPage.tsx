@@ -46,7 +46,7 @@ const SignupPage: React.FC = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
           {/* Logo Placeholder */}
           <Box sx={{ mb: 2 }}>
-            <img src="/logo192.png" alt="Dew Logo" style={{ height: 48 }} />
+            <img src="/DewLogo.png" alt="Dew Logo" style={{ height: 72 }} />
           </Box>
           <Typography component="h1" variant="h5" color="primary" fontWeight={700} gutterBottom>
             Sign Up

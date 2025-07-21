@@ -3,6 +3,7 @@ import { TextField, Button, Container, Typography, Box, Alert, Paper, InputAdorn
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../utils/AuthContext';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,8 +21,12 @@ const LoginPage: React.FC = () => {
         email,
         password,
       });
-      localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('user_role', response.data.role);
+      login(
+        response.data.access_token,
+        response.data.role,
+        response.data.full_name || 'User',
+        response.data.company || 'Dew'
+      );
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed');
@@ -33,7 +39,7 @@ const LoginPage: React.FC = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
           {/* Logo Placeholder */}
           <Box sx={{ mb: 2 }}>
-            <img src="/logo192.png" alt="Dew Logo" style={{ height: 48 }} />
+            <img src="/DewLogo.png" alt="Dew Logo" style={{ height: 72 }} />
           </Box>
           <Typography component="h1" variant="h5" color="primary" fontWeight={700} gutterBottom>
             Login
