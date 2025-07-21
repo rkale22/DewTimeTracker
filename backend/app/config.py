@@ -8,9 +8,13 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://username:password@localhost:5432/dew_timetracker"
     
     # Security
-    secret_key: str = "your-secret-key-here-make-it-long-and-random"
+    secret_key: str = "your-secret-key-here-make-it-long-and-random-change-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    
+    @property
+    def SECRET_KEY(self) -> str:
+        return self.secret_key
     
     # Email
     smtp_host: str = "smtp.gmail.com"

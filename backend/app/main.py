@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.core.database import create_db_and_tables
+from app.core.admin import ensure_seeded_admin
+from app.api.v1.api import api_router
 
 app = FastAPI(
     title="Dew Time Tracker API",
@@ -20,6 +22,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include API routes
+app.include_router(api_router, prefix="/api/v1")
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to Dew Time Tracker API"}
@@ -30,8 +35,9 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup"""
+    """Initialize database and create seeded admin on startup"""
     create_db_and_tables()
+    ensure_seeded_admin()
 
 if __name__ == "__main__":
     import uvicorn

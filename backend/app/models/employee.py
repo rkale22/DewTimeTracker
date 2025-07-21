@@ -15,10 +15,12 @@ class Employee(SQLModel, table=True):
     """Employee model representing consultants and managers"""
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(max_length=255, description="Employee full name")
+    full_name: str = Field(max_length=255, description="Employee full name")
     email: str = Field(max_length=255, unique=True, description="Employee email address")
+    password_hash: str = Field(description="Hashed password")
     client_id: Optional[int] = Field(default=None, foreign_key="client.id", description="Associated client")
     role: EmployeeRole = Field(default=EmployeeRole.CONSULTANT, description="Employee role")
+    is_active: bool = Field(default=True, description="Whether the account is active")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
@@ -37,10 +39,12 @@ class Employee(SQLModel, table=True):
     class Config:
         schema_extra = {
             "example": {
-                "name": "John Doe",
+                "full_name": "John Doe",
                 "email": "john.doe@dewsoftware.com",
+                "password_hash": "hashed_password_here",
                 "client_id": 1,
                 "role": "consultant",
+                "is_active": True,
                 "created_at": "2024-01-01T00:00:00",
                 "updated_at": "2024-01-01T00:00:00"
             }
