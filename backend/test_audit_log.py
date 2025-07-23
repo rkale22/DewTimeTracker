@@ -87,7 +87,7 @@ def test_audit_log():
             print(f"✅ Added details to audit log")
             
             # Update timesheet status
-            timesheet.status = TimesheetStatus.APPROVED
+            timesheet.status = TimesheetStatus.SUBMITTED.value
             timesheet.approved_by = employee.id
             timesheet.approved_at = datetime.utcnow()
             timesheet.comment = "Self-approved for testing"
@@ -100,7 +100,7 @@ def test_audit_log():
                 actor_id=employee.id,
                 actor_email=employee.email,
                 actor_role=employee.role.value,
-                details='{"previous_status": "pending", "comment": "Self-approved for testing"}',
+                details='{"previous_status": "submitted", "comment": "Self-approved for testing"}',
                 ip_address="192.168.1.100",
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             )

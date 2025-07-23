@@ -4,6 +4,9 @@ from app.config import settings
 from app.core.database import create_db_and_tables
 from app.core.admin import ensure_seeded_admin
 from app.api.v1.api import api_router
+from app.models.timesheet import TimesheetStatus
+
+print("TIMESHEET ENUM VALUES:", list(TimesheetStatus))
 
 app = FastAPI(
     title="Dew Time Tracker API",

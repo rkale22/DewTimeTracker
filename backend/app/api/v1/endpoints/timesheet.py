@@ -30,13 +30,15 @@ def list_timesheets(db: Session = Depends(get_db), current_user: Employee = Depe
         ).all()
         print(f"🔍 DEBUG: DEW_ADMIN - Found {len(timesheets)} timesheets")
     elif current_user.role == EmployeeRole.CLIENT_MANAGER:
+        # Managers only see timesheets submitted to them for approval
         timesheets = db.query(Timesheet).join(Employee, Timesheet.employee_id == Employee.id).filter(
-            Employee.client_id == current_user.client_id
+            Timesheet.status == TimesheetStatus.SUBMITTED.value,
+            Timesheet.manager_email == current_user.email
         ).options(
             joinedload(Timesheet.employee),
             joinedload(Timesheet.time_entries).joinedload(TimeEntry.break_periods)
         ).all()
-        print(f"🔍 DEBUG: CLIENT_MANAGER - Found {len(timesheets)} timesheets for client_id {current_user.client_id}")
+        print(f"🔍 DEBUG: CLIENT_MANAGER - Found {len(timesheets)} submitted timesheets for manager_email {current_user.email}")
     elif current_user.role == EmployeeRole.CONSULTANT:
         timesheets = db.query(Timesheet).filter(
             Timesheet.employee_id == current_user.id
@@ -84,7 +86,7 @@ def create_timesheet(data: TimesheetCreateRequest, db: Session = Depends(get_db)
         week_start=data.week_start,
         manager_email=data.manager_email,
         comment=data.comment,
-        status=TimesheetStatus.PENDING,
+        status=TimesheetStatus.DRAFT.value,
         project=data.project
     )
     db.add(timesheet)
@@ -112,7 +114,11 @@ def update_timesheet(timesheet_id: int, data: dict, db: Session = Depends(get_db
     if 'comment' in data:
         timesheet.comment = data['comment']
     if 'status' in data:
-        timesheet.status = data['status']
+        # Accepts both enum names (e.g., "DRAFT") and values (e.g., "draft"), always stores lowercase value
+        try:
+            timesheet.status = TimesheetStatus[data['status'].upper()].value
+        except (KeyError, AttributeError):
+            timesheet.status = str(data['status']).lower()
     if 'project' in data:
         timesheet.project = data['project']
     timesheet.updated_at = datetime.utcnow()
@@ -163,9 +169,29 @@ def approve_timesheet(timesheet_id: int, db: Session = Depends(get_db), current_
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managers can approve timesheets")
     if timesheet.employee.client_id != current_user.client_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    timesheet.status = TimesheetStatus.APPROVED
+    timesheet.status = TimesheetStatus.APPROVED.value
     timesheet.approved_by = current_user.id
     timesheet.approved_at = datetime.utcnow()
+    db.commit()
+    db.refresh(timesheet)
+    return TimesheetResponse.from_orm(timesheet)
+
+@router.post("/{timesheet_id}/submit", response_model=TimesheetResponse)
+def submit_timesheet(timesheet_id: int, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+    """
+    Submit a timesheet for approval. Only the consultant who owns the timesheet can submit.
+    Only timesheets in DRAFT status can be submitted.
+    """
+    timesheet = db.query(Timesheet).filter(Timesheet.id == timesheet_id).first()
+    if not timesheet:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timesheet not found")
+    if current_user.role != EmployeeRole.CONSULTANT or timesheet.employee_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to submit this timesheet")
+    if timesheet.status != TimesheetStatus.DRAFT.value:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only draft timesheets can be submitted")
+    timesheet.status = TimesheetStatus.SUBMITTED.value
+    timesheet.submitted_at = datetime.utcnow()
+    db.add(timesheet)
     db.commit()
     db.refresh(timesheet)
     return TimesheetResponse.from_orm(timesheet)

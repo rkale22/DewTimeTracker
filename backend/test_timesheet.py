@@ -84,7 +84,7 @@ def test_timesheet():
             print(f"✅ Timesheet belongs to '{timesheet_with_employee.employee.name}'")
             
             # Test status update
-            timesheet.status = TimesheetStatus.APPROVED
+            timesheet.status = TimesheetStatus.APPROVED.value
             timesheet.approved_by = employee.id
             timesheet.approved_at = datetime.utcnow()
             timesheet.comment = "Approved - looks good"
