@@ -41,4 +41,15 @@ export async function fetchTimesheets(token: string) {
     }
   );
   return response.data;
+}
+
+export async function submitTimesheet(timesheetId: number, token: string) {
+  const response = await axios.post(
+    `/api/v1/timesheets/${timesheetId}/submit`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
 } 

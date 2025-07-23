@@ -6,7 +6,7 @@ import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
 import { useAuth } from '../utils/AuthContext';
 import AddTimeEntryModal from '../components/AddTimeEntryModal';
-import { addTimeEntry, deleteTimeEntry, fetchTimesheets, createTimesheet } from '../services/timesheetService';
+import { addTimeEntry, deleteTimeEntry, fetchTimesheets, createTimesheet, submitTimesheet } from '../services/timesheetService';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -171,7 +171,33 @@ const TimesheetsPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               Manager Email: <b>{weekTimesheet.manager_email}</b>
             </Typography>
-            {/* Removed weekly regular/overtime/total hours display here */}
+            <Stack direction="row" alignItems="center" spacing={2} mt={1}>
+              <Chip label={weekTimesheet.status} color={
+                weekTimesheet.status === 'draft' ? 'default' :
+                weekTimesheet.status === 'submitted' ? 'info' :
+                weekTimesheet.status === 'approved' ? 'success' :
+                weekTimesheet.status === 'rejected' ? 'error' : 'default'
+              } />
+              {weekTimesheet.status === 'draft' && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={async () => {
+                    if (!token) return;
+                    try {
+                      await submitTimesheet(weekTimesheet.id, token);
+                      const data = await fetchTimesheets(token);
+                      setTimesheets(data);
+                      setSnackbar({ open: true, message: 'Timesheet submitted for approval!', severity: 'success' });
+                    } catch (err: any) {
+                      setSnackbar({ open: true, message: err?.response?.data?.detail || 'Failed to submit timesheet', severity: 'error' });
+                    }
+                  }}
+                >
+                  Submit for Approval
+                </Button>
+              )}
+            </Stack>
           </Box>
         ) : (
           <Stack direction="row" alignItems="center" spacing={2} mt={2} mb={1}>
@@ -216,7 +242,7 @@ const TimesheetsPage: React.FC = () => {
       ) : (
   <Box>
           <Box display="flex" justifyContent="flex-end" mb={2}>
-            <Button variant="contained" onClick={() => setAddModalOpen(true)} disabled={!weekTimesheet}>
+            <Button variant="contained" onClick={() => setAddModalOpen(true)} disabled={!weekTimesheet || weekTimesheet.status !== 'draft'}>
               Add Time Entry
             </Button>
           </Box>
@@ -294,7 +320,7 @@ const TimesheetsPage: React.FC = () => {
                           ))}
                         </TableCell>
                         <TableCell>
-                          <IconButton onClick={() => handleDeleteEntry(entry.id)}>
+                          <IconButton onClick={() => handleDeleteEntry(entry.id)} disabled={weekTimesheet.status !== 'draft'}>
                             <DeleteIcon />
                           </IconButton>
                         </TableCell>
