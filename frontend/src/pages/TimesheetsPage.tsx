@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Tabs, Tab, IconButton, Paper, Stack, CircularProgress, Button, TextField } from '@mui/material';
+import { Box, Typography, Tabs, Tab, IconButton, Paper, Stack, CircularProgress, Button, TextField, Table, TableHead, TableRow, TableCell, TableBody, Chip } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
 import { useAuth } from '../utils/AuthContext';
 import AddTimeEntryModal from '../components/AddTimeEntryModal';
+import { addTimeEntry, deleteTimeEntry, fetchTimesheets, createTimesheet } from '../services/timesheetService';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -24,32 +28,40 @@ const TimesheetsPage: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [managerEmail, setManagerEmail] = useState('');
   const [creatingTimesheet, setCreatingTimesheet] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
-    const fetchTimesheets = async () => {
+    const fetchData = async () => {
+      if (!token) return; // Safely handle missing token
       setLoading(true);
       try {
-        const res = await axios.get('/api/v1/timesheets/', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTimesheets(res.data);
+        const data = await fetchTimesheets(token);
+        setTimesheets(data);
       } catch (err) {
         // handle error
       } finally {
         setLoading(false);
       }
     };
-    fetchTimesheets();
+    fetchData();
   }, [token]);
 
   // Find timesheet for the selected week
   const weekRange = getWeekRange(selectedWeek);
   const weekTimesheet = timesheets.find((t) => t.week_start === weekRange.start.format('YYYY-MM-DD'));
-  const entries = weekTimesheet?.entries || {};
+  // Group time_entries by date
+  const groupedEntries: { [date: string]: any[] } = {};
+  if (weekTimesheet && weekTimesheet.time_entries) {
+    for (const entry of weekTimesheet.time_entries) {
+      const date = entry.date;
+      if (!groupedEntries[date]) groupedEntries[date] = [];
+      groupedEntries[date].push(entry);
+    }
+  }
 
   // Calculate total hours per day
   const getTotalHours = (dateStr: string) => {
-    const dayEntries = entries[dateStr] || [];
+    const dayEntries = groupedEntries[dateStr] || [];
     let total = 0;
     for (const entry of dayEntries) {
       const inTime = entry.in_time;
@@ -58,9 +70,9 @@ const TimesheetsPage: React.FC = () => {
         const [inH, inM] = inTime.split(':').map(Number);
         const [outH, outM] = outTime.split(':').map(Number);
         let duration = (outH * 60 + outM) - (inH * 60 + inM);
-        for (const br of entry.breaks || []) {
-          const [bStartH, bStartM] = br.start.split(':').map(Number);
-          const [bEndH, bEndM] = br.end.split(':').map(Number);
+        for (const br of entry.break_periods || []) {
+          const [bStartH, bStartM] = br.start_time.split(':').map(Number);
+          const [bEndH, bEndM] = br.end_time.split(':').map(Number);
           duration -= (bEndH * 60 + bEndM) - (bStartH * 60 + bStartM);
         }
         total += duration / 60;
@@ -70,20 +82,32 @@ const TimesheetsPage: React.FC = () => {
   };
 
   // Add new entry to local state (for now)
-  const handleAddEntry = (entry: any) => {
-    const date = entry.date;
-    if (!weekTimesheet) return; // Only allow if timesheet exists for week
-    const updated = { ...weekTimesheet };
-    updated.entries = { ...updated.entries };
-    if (!updated.entries[date]) updated.entries[date] = [];
-    updated.entries[date].push({
+  const handleAddEntry = async (entry: any) => {
+    if (!weekTimesheet || !token) return;
+    try {
+      // Map breaks to break_periods for backend compatibility
+      const break_periods = (entry.breaks || []).map((br: any) => ({
+        start_time: br.start,
+        end_time: br.end,
+      }));
+
+      const payload = {
+        date: entry.date,
       in_time: entry.in_time,
       out_time: entry.out_time,
-      breaks: entry.breaks,
       project: entry.project,
       note: entry.note,
-    });
-    setTimesheets(ts => ts.map(t => t.id === updated.id ? updated : t));
+        break_periods,
+      };
+
+      await addTimeEntry(weekTimesheet.id, payload, token);
+      // Refetch timesheets to update UI
+      const data = await fetchTimesheets(token);
+      setTimesheets(data);
+      setSnackbar({ open: true, message: 'Entry added!', severity: 'success' });
+    } catch (err: any) {
+      setSnackbar({ open: true, message: err?.response?.data?.detail || 'Failed to add entry', severity: 'error' });
+    }
   };
 
   // Handle week navigation
@@ -100,22 +124,35 @@ const TimesheetsPage: React.FC = () => {
   const handleCreateTimesheet = async () => {
     setCreatingTimesheet(true);
     try {
-      const res = await axios.post(
-        '/api/v1/timesheets/',
+      await createTimesheet(
         {
           week_start: weekRange.start.format('YYYY-MM-DD'),
-          entries: {},
           manager_email: managerEmail,
           comment: '',
           project: '',
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        token!
       );
-      setTimesheets(ts => [...ts, res.data]);
+      // Refetch timesheets to update UI
+      const data = await fetchTimesheets(token!);
+      setTimesheets(data);
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Failed to create timesheet');
     } finally {
       setCreatingTimesheet(false);
+    }
+  };
+
+  const handleDeleteEntry = async (entryId: number) => {
+    if (!weekTimesheet || !token) return;
+    try {
+      await deleteTimeEntry(weekTimesheet.id, entryId, token);
+      // Refetch timesheets to update UI
+      const data = await fetchTimesheets(token);
+      setTimesheets(data);
+      setSnackbar({ open: true, message: 'Entry deleted!', severity: 'success' });
+    } catch (err: any) {
+      setSnackbar({ open: true, message: err?.response?.data?.detail || 'Failed to delete entry', severity: 'error' });
     }
   };
 
@@ -134,11 +171,7 @@ const TimesheetsPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               Manager Email: <b>{weekTimesheet.manager_email}</b>
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Regular Hours: <b>{weekTimesheet.regular_hours?.toFixed(2) ?? '0.00'}</b>
-              &nbsp;|&nbsp; Overtime Hours: <b>{weekTimesheet.overtime_hours?.toFixed(2) ?? '0.00'}</b>
-              &nbsp;|&nbsp; Total Hours: <b>{weekTimesheet.total_hours?.toFixed(2) ?? '0.00'}</b>
-            </Typography>
+            {/* Removed weekly regular/overtime/total hours display here */}
           </Box>
         ) : (
           <Stack direction="row" alignItems="center" spacing={2} mt={2} mb={1}>
@@ -192,7 +225,7 @@ const TimesheetsPage: React.FC = () => {
             Time Entries for {dayjs(selectedDay).format('ddd, DD MMM')}
           </Typography>
           {(() => {
-            const dayEntries = entries[selectedDay] || [];
+            const dayEntries = groupedEntries[selectedDay] || [];
             let dayTotal = 0;
             for (const entry of dayEntries) {
               const inTime = entry.in_time;
@@ -201,9 +234,9 @@ const TimesheetsPage: React.FC = () => {
                 const [inH, inM] = inTime.split(':').map(Number);
                 const [outH, outM] = outTime.split(':').map(Number);
                 let duration = (outH * 60 + outM) - (inH * 60 + inM);
-                for (const br of entry.breaks || []) {
-                  const [bStartH, bStartM] = br.start.split(':').map(Number);
-                  const [bEndH, bEndM] = br.end.split(':').map(Number);
+                for (const br of entry.break_periods || []) {
+                  const [bStartH, bStartM] = br.start_time.split(':').map(Number);
+                  const [bEndH, bEndM] = br.end_time.split(':').map(Number);
                   duration -= (bEndH * 60 + bEndM) - (bStartH * 60 + bStartM);
                 }
                 dayTotal += duration / 60;
@@ -223,7 +256,7 @@ const TimesheetsPage: React.FC = () => {
           })()}
           <Box mt={2}>
             {(() => {
-              const dayEntries = entries[selectedDay] || [];
+              const dayEntries = groupedEntries[selectedDay] || [];
               if (dayEntries.length === 0) {
                 return (
                   <Typography align="center" color="text.secondary" mt={4}>
@@ -231,33 +264,45 @@ const TimesheetsPage: React.FC = () => {
                   </Typography>
                 );
               }
-              return dayEntries.map((entry: any, idx: number) => (
-                <Paper key={idx} sx={{ p: 2, mb: 2 }}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Typography fontWeight={600} color="primary.main">
-                      {entry.in_time} - {entry.out_time}
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Project: {entry.project || '-'}
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Note: {entry.note || '-'}
-    </Typography>
-                  </Stack>
-                  {entry.breaks && entry.breaks.length > 0 && (
-                    <Box mt={1} ml={2}>
-                      <Typography variant="body2" color="text.secondary">Breaks:</Typography>
-                      <ul style={{ margin: 0, paddingLeft: 16 }}>
-                        {entry.breaks.map((br: any, bidx: number) => (
-                          <li key={bidx}>
-                            {br.start} - {br.end}
-                          </li>
-                        ))}
-                      </ul>
-                    </Box>
-                  )}
-                </Paper>
-              ));
+              return (
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>In</TableCell>
+                      <TableCell>Out</TableCell>
+                      <TableCell>Project</TableCell>
+                      <TableCell>Note</TableCell>
+                      <TableCell>Breaks</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {dayEntries.map((entry: any) => (
+                      <TableRow key={entry.id}>
+                        <TableCell>{entry.in_time}</TableCell>
+                        <TableCell>{entry.out_time}</TableCell>
+                        <TableCell>{entry.project}</TableCell>
+                        <TableCell>{entry.note}</TableCell>
+                        <TableCell>
+                          {(entry.break_periods || []).map((br: any, idx: number) => (
+                            <Chip
+                              key={idx}
+                              label={`${br.start_time}–${br.end_time}`}
+                              size="small"
+                              sx={{ mr: 0.5, mb: 0.5 }}
+                            />
+                          ))}
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => handleDeleteEntry(entry.id)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              );
             })()}
           </Box>
           <AddTimeEntryModal
@@ -268,6 +313,16 @@ const TimesheetsPage: React.FC = () => {
           />
         </Box>
       )}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity as any} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
   </Box>
 );
 };
