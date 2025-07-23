@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, IconButton, Stack, Typography, Box
@@ -27,6 +27,11 @@ const AddTimeEntryModal: React.FC<AddTimeEntryModalProps> = ({ open, onClose, on
   const [project, setProject] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
+
+  // Sync date with defaultDate when modal opens
+  useEffect(() => {
+    if (open) setDate(defaultDate);
+  }, [open, defaultDate]);
 
   const handleAddBreak = () => setBreaks([...breaks, { start: '', end: '' }]);
   const handleRemoveBreak = (idx: number) => setBreaks(breaks.filter((_, i) => i !== idx));
