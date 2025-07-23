@@ -9,14 +9,17 @@ from app.models.employee import Employee, EmployeeRole
 from app.schemas.time_off import TimeOffCreateRequest, TimeOffUpdateRequest, TimeOffResponse
 from app.core.dependencies import get_current_user
 
-router = APIRouter(prefix="/time_off", tags=["time_off"])
+router = APIRouter(tags=["time_off"])
 
 # List time off requests
 @router.get("/", response_model=List[TimeOffResponse])
 def list_time_off(db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
     if current_user.role == EmployeeRole.CLIENT_MANAGER:
-        # All requests for employees in their client
-        requests = db.query(TimeOff).join(Employee).filter(Employee.client_id == current_user.client_id).all()
+        # Only requests submitted to this manager and pending
+        requests = db.query(TimeOff).filter(
+            TimeOff.manager_email == current_user.email,
+            TimeOff.status == TimeOffStatus.PENDING
+        ).all()
     elif current_user.role == EmployeeRole.CONSULTANT:
         requests = db.query(TimeOff).filter(TimeOff.employee_id == current_user.id).all()
     else:
@@ -50,6 +53,7 @@ def create_time_off(data: TimeOffCreateRequest, db: Session = Depends(get_db), c
         end_date=data.end_date,
         type=data.type,
         comment=data.comment,
+        manager_email=data.manager_email,
         status=TimeOffStatus.PENDING
     )
     db.add(req)
@@ -102,7 +106,7 @@ def approve_time_off(request_id: int, db: Session = Depends(get_db), current_use
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
     if current_user.role != EmployeeRole.CLIENT_MANAGER:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managers can approve requests")
-    if req.employee.client_id != current_user.client_id:
+    if req.manager_email != current_user.email:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
     if req.status != TimeOffStatus.PENDING:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only pending requests can be approved")
@@ -122,7 +126,7 @@ def reject_time_off(request_id: int, data: TimeOffUpdateRequest, db: Session = D
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
     if current_user.role != EmployeeRole.CLIENT_MANAGER:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managers can reject requests")
-    if req.employee.client_id != current_user.client_id:
+    if req.manager_email != current_user.email:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
     if req.status != TimeOffStatus.PENDING:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only pending requests can be rejected")

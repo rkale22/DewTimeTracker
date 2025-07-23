@@ -26,6 +26,7 @@ class TimeOff(SQLModel, table=True):
     approved_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    manager_email: str = Field(max_length=255, description="Email of manager for approval")
 
     employee: Optional["Employee"] = Relationship(back_populates="time_off_requests", sa_relationship_kwargs={"foreign_keys": "TimeOff.employee_id"})
     approver: Optional["Employee"] = Relationship(back_populates=None, sa_relationship_kwargs={"foreign_keys": "TimeOff.approved_by"}) 

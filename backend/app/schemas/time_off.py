@@ -10,7 +10,7 @@ class TimeOffBase(BaseModel):
     comment: Optional[str] = None
 
 class TimeOffCreateRequest(TimeOffBase):
-    pass
+    manager_email: str
 
 class TimeOffUpdateRequest(BaseModel):
     start_date: Optional[date] = None
@@ -24,6 +24,7 @@ class TimeOffResponse(TimeOffBase):
     id: int
     employee_id: int
     status: TimeOffStatus
+    manager_email: str
     manager_comment: Optional[str] = None
     approved_by: Optional[int] = None
     approved_at: Optional[datetime] = None
