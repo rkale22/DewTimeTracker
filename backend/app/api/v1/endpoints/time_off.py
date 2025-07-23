@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime
@@ -8,6 +8,7 @@ from app.models.time_off import TimeOff, TimeOffStatus
 from app.models.employee import Employee, EmployeeRole
 from app.schemas.time_off import TimeOffCreateRequest, TimeOffUpdateRequest, TimeOffResponse
 from app.core.dependencies import get_current_user
+from app.utils.email import send_email
 
 router = APIRouter(tags=["time_off"])
 
@@ -49,7 +50,7 @@ def get_time_off(request_id: int, db: Session = Depends(get_db), current_user: E
 
 # Create time off request
 @router.post("/", response_model=TimeOffResponse, status_code=status.HTTP_201_CREATED)
-def create_time_off(data: TimeOffCreateRequest, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+def create_time_off(data: TimeOffCreateRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
     if current_user.role != EmployeeRole.CONSULTANT:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only consultants can request time off")
     req = TimeOff(
@@ -64,6 +65,10 @@ def create_time_off(data: TimeOffCreateRequest, db: Session = Depends(get_db), c
     db.add(req)
     db.commit()
     db.refresh(req)
+    # Email notification to manager
+    subject = f"Time Off Request Submitted: {current_user.full_name} ({data.start_date} to {data.end_date})"
+    body = f"Hello,\n\nA new time off request has been submitted for your approval.\n\nEmployee: {current_user.full_name}\nDates: {data.start_date} to {data.end_date}\nType: {data.type}\n\nPlease log in to review and approve.\n\n-- Dew Time Tracker"
+    background_tasks.add_task(send_email, subject, body, [data.manager_email])
     return req
 
 # Update time off request
@@ -105,7 +110,7 @@ def delete_time_off(request_id: int, db: Session = Depends(get_db), current_user
 
 # Approve time off request
 @router.post("/{request_id}/approve", response_model=TimeOffResponse)
-def approve_time_off(request_id: int, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+def approve_time_off(request_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
     req = db.query(TimeOff).filter(TimeOff.id == request_id).first()
     if not req:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
@@ -121,6 +126,10 @@ def approve_time_off(request_id: int, db: Session = Depends(get_db), current_use
     req.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(req)
+    # Email notification to employee
+    subject = f"Your Time Off Request Was Approved ({req.start_date} to {req.end_date})"
+    body = f"Hello {req.employee.full_name},\n\nYour time off request for {req.start_date} to {req.end_date} has been approved.\n\n-- Dew Time Tracker"
+    background_tasks.add_task(send_email, subject, body, [req.employee.email])
     return req
 
 # Reject time off request

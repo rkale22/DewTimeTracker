@@ -38,18 +38,18 @@ const Sidebar: React.FC = () => {
           {/* Consultant: Dashboard, Timesheets, Time Off only */}
           {userRole === 'consultant' && (
             <>
-              <ListItem disablePadding>
-                <ListItemButton component={Link} to="/timesheets">
-                  <ListItemIcon><AccessTimeIcon color="primary" /></ListItemIcon>
-                  <ListItemText primary="Timesheets" />
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton component={Link} to="/time-off">
-                  <ListItemIcon><EventNoteIcon color="primary" /></ListItemIcon>
-                  <ListItemText primary="Time Off" />
-                </ListItemButton>
-              </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton component={Link} to="/timesheets">
+              <ListItemIcon><AccessTimeIcon color="primary" /></ListItemIcon>
+              <ListItemText primary="Timesheets" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton component={Link} to="/time-off">
+              <ListItemIcon><EventNoteIcon color="primary" /></ListItemIcon>
+              <ListItemText primary="Time Off" />
+            </ListItemButton>
+          </ListItem>
             </>
           )}
           {/* Client Manager: Dashboard, Approvals only */}

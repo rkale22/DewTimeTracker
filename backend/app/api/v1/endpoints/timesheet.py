@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime
@@ -13,6 +13,7 @@ from app.schemas.timesheet import TimesheetCreateRequest, TimesheetResponse
 from app.core.dependencies import get_current_user
 from app.models.time_entry import TimeEntry, BreakPeriod
 from app.schemas.timesheet import TimeEntryCreate, TimeEntryResponse, BreakPeriodCreate
+from app.utils.email import send_email
 
 # Remove prefix here; it will be added in the include_router call
 router = APIRouter(tags=["timesheets"])
@@ -161,7 +162,7 @@ def clock_out(timesheet_id: int, db: Session = Depends(get_db), current_user: Em
 
 # Approve timesheet
 @router.post("/{timesheet_id}/approve", response_model=TimesheetResponse)
-def approve_timesheet(timesheet_id: int, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+def approve_timesheet(timesheet_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
     timesheet = db.query(Timesheet).filter(Timesheet.id == timesheet_id).first()
     if not timesheet:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timesheet not found")
@@ -174,10 +175,14 @@ def approve_timesheet(timesheet_id: int, db: Session = Depends(get_db), current_
     timesheet.approved_at = datetime.utcnow()
     db.commit()
     db.refresh(timesheet)
+    # Email notification to employee
+    subject = f"Your Timesheet Was Approved ({timesheet.week_start})"
+    body = f"Hello {timesheet.employee.full_name},\n\nYour timesheet for the week starting {timesheet.week_start} has been approved.\n\n-- Dew Time Tracker"
+    background_tasks.add_task(send_email, subject, body, [timesheet.employee.email])
     return TimesheetResponse.from_orm(timesheet)
 
 @router.post("/{timesheet_id}/submit", response_model=TimesheetResponse)
-def submit_timesheet(timesheet_id: int, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+def submit_timesheet(timesheet_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
     """
     Submit a timesheet for approval. Only the consultant who owns the timesheet can submit.
     Only timesheets in DRAFT status can be submitted.
@@ -194,6 +199,10 @@ def submit_timesheet(timesheet_id: int, db: Session = Depends(get_db), current_u
     db.add(timesheet)
     db.commit()
     db.refresh(timesheet)
+    # Email notification to manager
+    subject = f"Timesheet Submitted for Approval: {current_user.full_name} ({timesheet.week_start})"
+    body = f"Hello,\n\nA new timesheet has been submitted for your approval.\n\nEmployee: {current_user.full_name}\nWeek: {timesheet.week_start}\n\nPlease log in to review and approve.\n\n-- Dew Time Tracker"
+    background_tasks.add_task(send_email, subject, body, [timesheet.manager_email])
     return TimesheetResponse.from_orm(timesheet)
 
 @router.post("/{timesheet_id}/entries", response_model=TimeEntryResponse)

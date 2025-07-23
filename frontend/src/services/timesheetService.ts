@@ -52,7 +52,7 @@ export async function submitTimesheet(timesheetId: number, token: string) {
     }
   );
   return response.data;
-}
+} 
 
 export async function approveTimesheet(timesheetId: number, token: string) {
   const response = await axios.post(
