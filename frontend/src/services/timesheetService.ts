@@ -52,4 +52,28 @@ export async function submitTimesheet(timesheetId: number, token: string) {
     }
   );
   return response.data;
+}
+
+export async function approveTimesheet(timesheetId: number, token: string) {
+  const response = await axios.post(
+    `/api/v1/timesheets/${timesheetId}/approve`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
+}
+
+export async function rejectTimesheet(timesheetId: number, token: string) {
+  // If /reject endpoint exists, use it. Otherwise, fallback to update status.
+  // We'll update this if /reject is confirmed.
+  const response = await axios.put(
+    `/api/v1/timesheets/${timesheetId}`,
+    { status: 'rejected' },
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
 } 

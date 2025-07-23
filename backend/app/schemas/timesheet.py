@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime, time
 from app.models.timesheet import TimesheetStatus
+from app.schemas.employee import EmployeeBasicResponse
 
 # --- BreakPeriod Schemas ---
 class BreakPeriodCreate(BaseModel):
@@ -79,6 +80,7 @@ class TimesheetResponse(BaseModel):
     regular_hours: float
     overtime_hours: float
     total_hours: float
+    employee: EmployeeBasicResponse  # <-- new field
 
     @classmethod
     def from_orm(cls, obj):
@@ -112,6 +114,7 @@ class TimesheetResponse(BaseModel):
             regular_hours=regular_hours,
             overtime_hours=overtime_hours,
             total_hours=total_hours,
+            employee=EmployeeBasicResponse.from_orm(obj.employee) if hasattr(obj, 'employee') and obj.employee else None,
         )
 
     class Config:

@@ -35,18 +35,24 @@ const Sidebar: React.FC = () => {
               <ListItemText primary="Dashboard" />
             </ListItemButton>
           </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton component={Link} to="/timesheets">
-              <ListItemIcon><AccessTimeIcon color="primary" /></ListItemIcon>
-              <ListItemText primary="Timesheets" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton component={Link} to="/time-off">
-              <ListItemIcon><EventNoteIcon color="primary" /></ListItemIcon>
-              <ListItemText primary="Time Off" />
-            </ListItemButton>
-          </ListItem>
+          {/* Consultant: Dashboard, Timesheets, Time Off only */}
+          {userRole === 'consultant' && (
+            <>
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/timesheets">
+                  <ListItemIcon><AccessTimeIcon color="primary" /></ListItemIcon>
+                  <ListItemText primary="Timesheets" />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/time-off">
+                  <ListItemIcon><EventNoteIcon color="primary" /></ListItemIcon>
+                  <ListItemText primary="Time Off" />
+                </ListItemButton>
+              </ListItem>
+            </>
+          )}
+          {/* Client Manager: Dashboard, Approvals only */}
           {userRole === 'client_manager' && (
             <ListItem disablePadding>
               <ListItemButton component={Link} to="/approvals">
@@ -55,8 +61,27 @@ const Sidebar: React.FC = () => {
               </ListItemButton>
             </ListItem>
           )}
+          {/* Admin: show all items as before */}
           {userRole === 'dew_admin' && (
             <>
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/timesheets">
+                  <ListItemIcon><AccessTimeIcon color="primary" /></ListItemIcon>
+                  <ListItemText primary="Timesheets" />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/time-off">
+                  <ListItemIcon><EventNoteIcon color="primary" /></ListItemIcon>
+                  <ListItemText primary="Time Off" />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/approvals">
+                  <ListItemIcon><AssignmentTurnedInIcon color="primary" /></ListItemIcon>
+                  <ListItemText primary="Approvals" />
+                </ListItemButton>
+              </ListItem>
               <Divider sx={{ my: 1 }} />
               <ListItem disablePadding>
                 <ListItemButton component={Link} to="/clients">

@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
 from app.models.time_off import TimeOffType, TimeOffStatus
+from app.schemas.employee import EmployeeBasicResponse
 
 class TimeOffBase(BaseModel):
     start_date: date
@@ -30,6 +31,7 @@ class TimeOffResponse(TimeOffBase):
     approved_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    employee: EmployeeBasicResponse
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

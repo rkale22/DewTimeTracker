@@ -28,7 +28,7 @@ const AddTimeEntryModal: React.FC<AddTimeEntryModalProps> = ({ open, onClose, on
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
 
-  // Sync date with defaultDate when modal opens
+  // Always sync date with defaultDate when modal opens or defaultDate changes
   useEffect(() => {
     if (open) setDate(defaultDate);
   }, [open, defaultDate]);

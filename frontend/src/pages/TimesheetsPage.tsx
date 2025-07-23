@@ -30,6 +30,11 @@ const TimesheetsPage: React.FC = () => {
   const [creatingTimesheet, setCreatingTimesheet] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  // Sync selectedDay to Monday of selectedWeek whenever selectedWeek changes
+  useEffect(() => {
+    setSelectedDay(selectedWeek.format('YYYY-MM-DD'));
+  }, [selectedWeek]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return; // Safely handle missing token

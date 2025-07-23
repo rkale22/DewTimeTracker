@@ -28,4 +28,27 @@ export async function deleteTimeOffRequest(requestId: number, token: string) {
       headers: { Authorization: `Bearer ${token}` }
     }
   );
+}
+
+export async function approveTimeOff(requestId: number, token: string) {
+  const response = await axios.post(
+    `/api/v1/time_off/${requestId}/approve`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
+}
+
+export async function rejectTimeOff(requestId: number, token: string) {
+  // POST with minimal body (TimeOffUpdateRequest)
+  const response = await axios.post(
+    `/api/v1/time_off/${requestId}/reject`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  return response.data;
 } 

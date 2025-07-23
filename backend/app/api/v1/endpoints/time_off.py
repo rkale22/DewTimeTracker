@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime
 
@@ -16,15 +16,20 @@ router = APIRouter(tags=["time_off"])
 def list_time_off(db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
     if current_user.role == EmployeeRole.CLIENT_MANAGER:
         # Only requests submitted to this manager and pending
-        requests = db.query(TimeOff).filter(
+        requests = db.query(TimeOff).options(
+            joinedload(TimeOff.employee)
+        ).filter(
             TimeOff.manager_email == current_user.email,
             TimeOff.status == TimeOffStatus.PENDING
         ).all()
+        return [TimeOffResponse.from_orm(r) for r in requests]
     elif current_user.role == EmployeeRole.CONSULTANT:
-        requests = db.query(TimeOff).filter(TimeOff.employee_id == current_user.id).all()
+        requests = db.query(TimeOff).options(
+            joinedload(TimeOff.employee)
+        ).filter(TimeOff.employee_id == current_user.id).all()
+        return [TimeOffResponse.from_orm(r) for r in requests]
     else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    return requests
 
 # Get time off request by ID
 @router.get("/{request_id}", response_model=TimeOffResponse)
