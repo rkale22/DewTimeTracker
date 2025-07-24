@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, test_auth, employee, timesheet, time_off, client
+from app.api.v1.endpoints import auth, test_auth, employee, timesheet, time_off, client, dashboard
 
 api_router = APIRouter()
 
@@ -17,4 +17,5 @@ api_router.include_router(timesheet.router, prefix="/timesheets", tags=["timeshe
 # Include time off endpoints
 api_router.include_router(time_off.router, prefix="/time_off", tags=["time_off"])
 # Include client endpoints
-api_router.include_router(client.router, prefix="/clients", tags=["clients"]) 
+api_router.include_router(client.router, prefix="/clients", tags=["clients"])
+api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"]) 
