@@ -41,6 +41,7 @@ def dashboard_summary(current_user: Employee = Depends(get_current_user)):
     elif role == "dew_admin":
         # Admin dashboard mock data
         return {
+            "userName": current_user.full_name,
             "orgStats": {"totalUsers": 25, "totalTimesheets": 120, "totalHours": 960},
             "notifications": [
                 {"type": "system", "message": "All systems operational."}

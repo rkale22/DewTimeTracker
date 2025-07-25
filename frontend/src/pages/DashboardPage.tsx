@@ -6,7 +6,7 @@ import TrackedHoursBarChart from '../components/TrackedHoursBarChart';
 import TeamHoursBarChart from '../components/TeamHoursBarChart';
 
 const DashboardPage: React.FC = () => {
-  const { userRole, token } = useAuth();
+  const { userRole, token, userName: authUserName } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +104,7 @@ const DashboardPage: React.FC = () => {
           }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'white' }}>
-                Welcome, {('userName' in dashboardData ? dashboardData.userName : 'User')}!
+                Welcome, {('userName' in dashboardData && dashboardData.userName) ? dashboardData.userName : (authUserName || 'User')}!
               </Typography>
               <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                 Your role: <b>{userRole}</b>

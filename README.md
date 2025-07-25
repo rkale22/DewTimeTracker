@@ -1,51 +1,82 @@
 # Dew Time Tracker
 
-A full-stack time tracking application for DEW Software consultancy, built with React, FastAPI, and PostgreSQL.
+A full-stack, role-based time tracking and approval system built with React, FastAPI, and PostgreSQL.
 
-## Project Overview
+---
 
-This application allows:
+## Table of Contents
 
-- **Consultants/Employees** to log their hours and submit timesheets
-- **Client Managers** to approve/reject timesheets via email or portal
-- **Dew Admins** to manage all data and generate reports
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture Overview](#architecture-overview)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Security & Best Practices](#security--best-practices)
+- [License](#license)
+
+---
+
+## Features
+
+- Role-based dashboards for Consultants, Managers, and Admins
+- Timesheet creation, editing, and submission workflow
+- Manager approvals and notifications (email + in-app)
+- Time off requests and approvals
+- Responsive, modern UI 
+- Secure authentication (JWT)
+- Email notifications via SMTP
+- Audit logging 
+
+---
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Material UI (MUI)
-- **Backend**: FastAPI + Python 3.8+
-- **Database**: PostgreSQL
-- **Authentication**: JWT tokens
-- **Email**: SMTP (SendGrid/Mailtrap)
+- **Frontend:** React 18, TypeScript, Material UI, Recharts
+- **Backend:** FastAPI (Python 3.8+), SQLModel, Alembic
+- **Database:** PostgreSQL
+- **Authentication:** JWT (stateless, secure)
+- **Email:** SMTP (SendGrid)
+
+---
+
+## Architecture Overview
+
+- **Frontend:** SPA built with React, using Material UI for consistent design and Recharts for data visualization.
+- **Backend:** REST API built with FastAPI, using SQLModel for ORM and Pydantic for validation.
+- **Separation of Concerns:** Models, schemas, endpoints, and utilities are all separated for maintainability.
+- **Role-based Access:** Both frontend and backend enforce user roles for security and clarity.
+
+---
 
 ## Project Structure
 
 ```
 DewTimeTracker/
-├── backend/                 # FastAPI backend
+├── backend/
 │   ├── app/
-│   │   ├── api/            # API routes
-│   │   ├── core/           # Core utilities
-│   │   ├── models/         # Database models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   ├── utils/          # Utility functions
-│   │   ├── config.py       # Configuration
-│   │   └── main.py         # FastAPI app
-│   ├── requirements.txt    # Python dependencies
-│   └── env.example         # Environment variables template
-├── frontend/               # React frontend
+│   │   ├── api/        # API endpoints (routes)
+│   │   ├── core/       # DB/session/config utilities
+│   │   ├── models/     # SQLModel DB models
+│   │   ├── schemas/    # Pydantic schemas for validation
+│   │   ├── utils/      # Email, auth, access control
+│   │   └── main.py     # FastAPI app entry
+│   ├── requirements.txt
+│   └── env.example
+├── frontend/
 │   ├── src/
-│   │   ├── components/     # Reusable components
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API services
-│   │   ├── types/          # TypeScript types
-│   │   ├── utils/          # Utility functions
-│   │   ├── App.tsx         # Main app component
-│   │   └── index.tsx       # Entry point
-│   ├── package.json        # Node dependencies
-│   └── tsconfig.json       # TypeScript config
-└── README.md               # This file
+│   │   ├── components/ # Reusable UI components
+│   │   ├── pages/      # Main app pages
+│   │   ├── services/   # API service functions
+│   │   ├── layouts/    # Main layout (header/sidebar)
+│   │   ├── utils/      # Auth context, helpers
+│   │   └── theme.ts    # Material UI theme
+│   ├── package.json
+│   └── tsconfig.json
+└── README.md
 ```
+
+---
 
 ## Getting Started
 
@@ -57,59 +88,52 @@ DewTimeTracker/
 
 ### Backend Setup
 
-1. Navigate to the backend directory:
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp env.example .env
+# Edit .env with your DB and SMTP settings
+uvicorn app.main:app --reload
+```
 
-   ```bash
-   cd backend
-   ```
-
-2. Create a virtual environment:
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Copy environment template:
-
-   ```bash
-   cp env.example .env
-   ```
-
-5. Update `.env` with your configuration
-
-6. Run the development server:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-
-The API will be available at `http://localhost:8000`
-API documentation at `http://localhost:8000/docs`
+- API: http://localhost:8000
+- Docs: http://localhost:8000/docs
 
 ### Frontend Setup
 
-1. Navigate to the frontend directory:
+```bash
+cd frontend
+npm install
+npm start
+```
 
-   ```bash
-   cd frontend
-   ```
+- App: http://localhost:3000
 
-2. Install dependencies:
+---
 
-   ```bash
-   npm install
-   ```
+## Usage
 
-3. Start the development server:
-   ```bash
-   npm start
-   ```
+- **Login:** Use provided test accounts for consultant, manager, and admin roles.
+- **Timesheets:** Consultants can create, edit, and submit timesheets.
+- **Approvals:** Managers can approve/reject timesheets and time off requests.
+- **Admin:** View organization stats and manage users.
+- **Notifications:** Email and in-app notifications for workflow events.
 
-The frontend will be available at `http://localhost:3000`
+---
 
+## Security & Best Practices
+
+- JWT authentication and role-based access control
+- Passwords are securely hashed
+- All data validated with Pydantic schemas
+- CORS enabled for trusted origins only
+- Parameterized queries via SQLModel ORM
+- Email notifications sent securely via SMTP
+
+---
+
+## License
+
+[MIT](LICENSE) (or your chosen license)
