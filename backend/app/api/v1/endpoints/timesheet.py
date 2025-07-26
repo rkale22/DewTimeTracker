@@ -20,33 +20,47 @@ router = APIRouter(tags=["timesheets"])
 
 # List timesheets
 @router.get("/", response_model=List[TimesheetResponse])
-def list_timesheets(db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+def list_timesheets(
+    employee_id: int = None,
+    db: Session = Depends(get_db), 
+    current_user: Employee = Depends(get_current_user)
+):
     print(f"🔍 DEBUG: User {current_user.email} (ID: {current_user.id}) with role {current_user.role.value} requesting timesheets")
     print(f"🔍 DEBUG: User client_id: {current_user.client_id}")
+    print(f"🔍 DEBUG: Filtering by employee_id: {employee_id}")
     
     if current_user.role == EmployeeRole.DEW_ADMIN:
-        timesheets = db.query(Timesheet).options(
+        query = db.query(Timesheet).options(
             joinedload(Timesheet.employee),
             joinedload(Timesheet.time_entries).joinedload(TimeEntry.break_periods)
-        ).all()
+        )
+        if employee_id:
+            query = query.filter(Timesheet.employee_id == employee_id)
+        timesheets = query.all()
         print(f"🔍 DEBUG: DEW_ADMIN - Found {len(timesheets)} timesheets")
     elif current_user.role == EmployeeRole.CLIENT_MANAGER:
         # Managers only see timesheets submitted to them for approval
-        timesheets = db.query(Timesheet).join(Employee, Timesheet.employee_id == Employee.id).filter(
+        query = db.query(Timesheet).join(Employee, Timesheet.employee_id == Employee.id).filter(
             Timesheet.status == TimesheetStatus.SUBMITTED.value,
             Timesheet.manager_email == current_user.email
         ).options(
             joinedload(Timesheet.employee),
             joinedload(Timesheet.time_entries).joinedload(TimeEntry.break_periods)
-        ).all()
+        )
+        if employee_id:
+            query = query.filter(Timesheet.employee_id == employee_id)
+        timesheets = query.all()
         print(f"🔍 DEBUG: CLIENT_MANAGER - Found {len(timesheets)} submitted timesheets for manager_email {current_user.email}")
     elif current_user.role == EmployeeRole.CONSULTANT:
-        timesheets = db.query(Timesheet).filter(
+        query = db.query(Timesheet).filter(
             Timesheet.employee_id == current_user.id
         ).options(
             joinedload(Timesheet.employee),
             joinedload(Timesheet.time_entries).joinedload(TimeEntry.break_periods)
-        ).all()
+        )
+        if employee_id and employee_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view other employee timesheets")
+        timesheets = query.all()
         print(f"🔍 DEBUG: CONSULTANT - Found {len(timesheets)} timesheets for employee_id {current_user.id}")
     else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")

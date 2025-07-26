@@ -8,7 +8,7 @@ from app.models.employee import Employee, EmployeeRole
 from app.schemas.client import ClientCreateRequest, ClientUpdateRequest, ClientResponse
 from app.core.dependencies import get_current_user
 
-router = APIRouter(prefix="/clients", tags=["clients"])
+router = APIRouter(tags=["clients"])
 
 # List clients
 @router.get("/", response_model=List[ClientResponse])

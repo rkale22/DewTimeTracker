@@ -14,20 +14,38 @@ router = APIRouter(tags=["time_off"])
 
 # List time off requests
 @router.get("/", response_model=List[TimeOffResponse])
-def list_time_off(db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
-    if current_user.role == EmployeeRole.CLIENT_MANAGER:
+def list_time_off(
+    employee_id: int = None,
+    db: Session = Depends(get_db), 
+    current_user: Employee = Depends(get_current_user)
+):
+    if current_user.role == EmployeeRole.DEW_ADMIN:
+        query = db.query(TimeOff).options(
+            joinedload(TimeOff.employee)
+        )
+        if employee_id:
+            query = query.filter(TimeOff.employee_id == employee_id)
+        requests = query.all()
+        return [TimeOffResponse.from_orm(r) for r in requests]
+    elif current_user.role == EmployeeRole.CLIENT_MANAGER:
         # Only requests submitted to this manager and pending
-        requests = db.query(TimeOff).options(
+        query = db.query(TimeOff).options(
             joinedload(TimeOff.employee)
         ).filter(
             TimeOff.manager_email == current_user.email,
             TimeOff.status == TimeOffStatus.PENDING
-        ).all()
+        )
+        if employee_id:
+            query = query.filter(TimeOff.employee_id == employee_id)
+        requests = query.all()
         return [TimeOffResponse.from_orm(r) for r in requests]
     elif current_user.role == EmployeeRole.CONSULTANT:
-        requests = db.query(TimeOff).options(
+        query = db.query(TimeOff).options(
             joinedload(TimeOff.employee)
-        ).filter(TimeOff.employee_id == current_user.id).all()
+        ).filter(TimeOff.employee_id == current_user.id)
+        if employee_id and employee_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view other employee time-off requests")
+        requests = query.all()
         return [TimeOffResponse.from_orm(r) for r in requests]
     else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")

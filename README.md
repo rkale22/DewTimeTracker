@@ -23,10 +23,10 @@ A full-stack, role-based time tracking and approval system built with React, Fas
 - Timesheet creation, editing, and submission workflow
 - Manager approvals and notifications (email + in-app)
 - Time off requests and approvals
-- Responsive, modern UI 
+- Responsive, modern UI
 - Secure authentication (JWT)
 - Email notifications via SMTP
-- Audit logging 
+- Audit logging
 
 ---
 
@@ -115,11 +115,43 @@ npm start
 
 ## Usage
 
-- **Login:** Use provided test accounts for consultant, manager, and admin roles.
-- **Timesheets:** Consultants can create, edit, and submit timesheets.
-- **Approvals:** Managers can approve/reject timesheets and time off requests.
-- **Admin:** View organization stats and manage users.
-- **Notifications:** Email and in-app notifications for workflow events.
+### Role-Based Access
+
+**Consultants:**
+
+- **Dashboard:** View personal statistics and upcoming time-off
+- **Timesheets:** Create, edit, and submit weekly timesheets
+- **Time Off:** Request and view time-off status
+
+**Client Managers:**
+
+- **Dashboard:** View team statistics and pending approvals
+- **Approvals:** Review and approve/reject timesheets and time-off requests
+
+**DEW Admins:**
+
+- **Dashboard:** View organization-wide statistics
+- **Employee Management:** Complete employee lifecycle management including:
+  - Add new employees
+  - View employee profiles and history
+  - Edit timesheets directly (advanced editing with time entries and breaks)
+  - Approve/reject timesheets and time-off requests
+  - Manage employee roles and client assignments
+
+### Key Features
+
+- **Advanced Admin Capabilities:** DEW admins can edit timesheets with full time entry and break management
+- **Role-based Navigation:** Streamlined interface showing only relevant pages for each role
+- **Email Notifications:** Automated notifications for approvals, rejections, and submissions
+- **Real-time Updates:** Immediate UI updates after actions
+- **Comprehensive Audit Logging:** Complete activity tracking for compliance
+
+### Workflow
+
+1. **Consultants** create and submit timesheets through the Timesheets page
+2. **Client Managers** review and approve submissions through the Approvals page
+3. **DEW Admins** manage everything through the Employee Management interface
+4. **Email notifications** keep all parties informed of status changes
 
 ---
 

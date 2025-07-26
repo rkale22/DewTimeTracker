@@ -8,7 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import TimesheetsPage from './pages/TimesheetsPage';
 import TimeOffPage from './pages/TimeOffPage';
 import ApprovalsPage from './pages/ApprovalsPage';
-import ClientsPage from './pages/ClientsPage';
+
 import EmployeesPage from './pages/EmployeesPage';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -41,16 +41,20 @@ function App() {
             } />
             <Route path="/timesheets" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <TimesheetsPage />
-                </MainLayout>
+                <RoleProtectedRoute allowedRoles={["consultant"]}>
+                  <MainLayout>
+                    <TimesheetsPage />
+                  </MainLayout>
+                </RoleProtectedRoute>
               </ProtectedRoute>
             } />
             <Route path="/time-off" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <TimeOffPage />
-                </MainLayout>
+                <RoleProtectedRoute allowedRoles={["consultant"]}>
+                  <MainLayout>
+                    <TimeOffPage />
+                  </MainLayout>
+                </RoleProtectedRoute>
               </ProtectedRoute>
             } />
             <Route path="/approvals" element={
@@ -62,15 +66,7 @@ function App() {
                 </RoleProtectedRoute>
               </ProtectedRoute>
             } />
-            <Route path="/clients" element={
-              <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={["dew_admin"]}>
-                  <MainLayout>
-                    <ClientsPage />
-                  </MainLayout>
-                </RoleProtectedRoute>
-              </ProtectedRoute>
-            } />
+
             <Route path="/employees" element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["dew_admin"]}>

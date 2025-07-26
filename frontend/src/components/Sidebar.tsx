@@ -4,7 +4,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import GroupIcon from '@mui/icons-material/Group';
-import BusinessIcon from '@mui/icons-material/Business';
+
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import { useAuth } from '../utils/AuthContext';
 import { Link } from 'react-router-dom';
@@ -61,34 +61,10 @@ const Sidebar: React.FC = () => {
               </ListItemButton>
             </ListItem>
           )}
-          {/* Admin: show all items as before */}
+          {/* Admin: Dashboard and Employees only (timesheet/time-off management moved to Employee modal) */}
           {userRole === 'dew_admin' && (
             <>
-              <ListItem disablePadding>
-                <ListItemButton component={Link} to="/timesheets">
-                  <ListItemIcon><AccessTimeIcon color="primary" /></ListItemIcon>
-                  <ListItemText primary="Timesheets" />
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton component={Link} to="/time-off">
-                  <ListItemIcon><EventNoteIcon color="primary" /></ListItemIcon>
-                  <ListItemText primary="Time Off" />
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton component={Link} to="/approvals">
-                  <ListItemIcon><AssignmentTurnedInIcon color="primary" /></ListItemIcon>
-                  <ListItemText primary="Approvals" />
-                </ListItemButton>
-              </ListItem>
               <Divider sx={{ my: 1 }} />
-              <ListItem disablePadding>
-                <ListItemButton component={Link} to="/clients">
-                  <ListItemIcon><BusinessIcon color="primary" /></ListItemIcon>
-                  <ListItemText primary="Clients" />
-                </ListItemButton>
-              </ListItem>
               <ListItem disablePadding>
                 <ListItemButton component={Link} to="/employees">
                   <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>

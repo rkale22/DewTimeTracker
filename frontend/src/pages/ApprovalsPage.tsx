@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { fetchTimesheets, approveTimesheet, rejectTimesheet } from '../services/timesheetService';
 import { fetchTimeOffRequests, approveTimeOff, rejectTimeOff } from '../services/timeOffService';
+import TimesheetViewerModal from '../components/TimesheetViewerModal';
+import TimeOffViewerModal from '../components/TimeOffViewerModal';
 // Material-UI imports
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress, Snackbar, Alert, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -18,6 +20,12 @@ const ApprovalsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null); // id of item being actioned
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+  
+  // Modal state
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedTimesheetId, setSelectedTimesheetId] = useState<number | null>(null);
+  const [timeOffViewModalOpen, setTimeOffViewModalOpen] = useState(false);
+  const [selectedTimeOffId, setSelectedTimeOffId] = useState<number | null>(null);
 
   const { token } = useAuth();
   const theme = useTheme();
@@ -70,6 +78,26 @@ const ApprovalsPage: React.FC = () => {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleViewTimesheet = (id: number) => {
+    setSelectedTimesheetId(id);
+    setViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewModalOpen(false);
+    setSelectedTimesheetId(null);
+  };
+
+  const handleViewTimeOff = (id: number) => {
+    setSelectedTimeOffId(id);
+    setTimeOffViewModalOpen(true);
+  };
+
+  const handleCloseTimeOffViewModal = () => {
+    setTimeOffViewModalOpen(false);
+    setSelectedTimeOffId(null);
   };
 
   const handleApproveTimeOff = async (id: number) => {
@@ -174,6 +202,15 @@ const ApprovalsPage: React.FC = () => {
                                 <TableCell>{ts.status}</TableCell>
                                 <TableCell align="right">
                                   <Button
+                                    variant="outlined"
+                                    color="info"
+                                    size="small"
+                                    style={{ marginRight: 8 }}
+                                    onClick={() => handleViewTimesheet(ts.id)}
+                                  >
+                                    View
+                                  </Button>
+                                  <Button
                                     variant="contained"
                                     color="primary"
                                     size="small"
@@ -234,6 +271,15 @@ const ApprovalsPage: React.FC = () => {
                           <TableCell>{to.status}</TableCell>
                           <TableCell align="right">
                             <Button
+                              variant="outlined"
+                              color="info"
+                              size="small"
+                              style={{ marginRight: 8 }}
+                              onClick={() => handleViewTimeOff(to.id)}
+                            >
+                              View
+                            </Button>
+                            <Button
                               variant="contained"
                               color="primary"
                               size="small"
@@ -273,6 +319,22 @@ const ApprovalsPage: React.FC = () => {
           </Alert>
         </Snackbar>
       </div>
+      
+      {/* Timesheet Viewer Modal */}
+      <TimesheetViewerModal
+        open={viewModalOpen}
+        onClose={handleCloseViewModal}
+        timesheetId={selectedTimesheetId}
+        token={token!}
+      />
+      
+      {/* Time-Off Viewer Modal */}
+      <TimeOffViewerModal
+        open={timeOffViewModalOpen}
+        onClose={handleCloseTimeOffViewModal}
+        timeOffId={selectedTimeOffId}
+        token={token!}
+      />
     </div>
   );
 };
